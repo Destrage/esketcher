@@ -6,6 +6,9 @@ import { ConstraintDefinitions } from "../constr/ANConstraints";
 import { dfs } from "gems/traverse";
 import { SketchSegmentSerializationData } from "./segment";
 
+let edgeCounter = 1;
+let coincidentCounter = 1;
+
 export class EndPoint extends SketchObject {
   params: {
     isCorner: boolean;
@@ -13,8 +16,11 @@ export class EndPoint extends SketchObject {
     y: Param;
   };
 
+  id: any;
+
   constructor(x, y, id?) {
     super(id);
+    this.id = id;
     this.params = {
       isCorner: false,
       x: new Param(x, "X"),
@@ -70,15 +76,19 @@ export class EndPoint extends SketchObject {
   }
 
   drawImpl(ctx, scale) {
-    let color = "blue"; // Default color for edges
+    let color = "#FDB825";
     let isCoincident = false;
+    let id = parseInt(this.id);
     this.visitLinked((linkedPoint) => {
       if (linkedPoint !== this) {
         isCoincident = true;
       }
     });
+    let label = "";
     if (isCoincident) {
-      color = "red"; // Change color to red if the point is coincident
+      label = `C${id}`;
+    } else {
+      label = `E${id}`;
     }
     ctx.fillStyle = color;
     DrawPoint(ctx, this.x, this.y, 3, scale);
@@ -90,6 +100,11 @@ export class EndPoint extends SketchObject {
     ctx.fill();
     ctx.strokeStyle = color;
     ctx.stroke();
+
+    // Draw the label near the point
+    ctx.fillStyle = "black";
+    ctx.font = `${12 * scale}px Arial`;
+    ctx.fillText(label, this.x + 5 * scale, this.y - 5 * scale);
   }
 
   setXY(x, y) {
