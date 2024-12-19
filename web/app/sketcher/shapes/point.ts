@@ -1,23 +1,24 @@
-import {SketchObject, SketchObjectSerializationData} from './sketch-object'
-import {DrawPoint} from './draw-utils'
-import Vector from 'math/vector';
-import {Param} from "./param";
-import {ConstraintDefinitions} from "../constr/ANConstraints";
-import {dfs} from "gems/traverse";
-import {SketchSegmentSerializationData} from "./segment";
+import { SketchObject, SketchObjectSerializationData } from "./sketch-object";
+import { DrawPoint } from "./draw-utils";
+import Vector from "math/vector";
+import { Param } from "./param";
+import { ConstraintDefinitions } from "../constr/ANConstraints";
+import { dfs } from "gems/traverse";
+import { SketchSegmentSerializationData } from "./segment";
 
 export class EndPoint extends SketchObject {
-
-  params : {
-    x: Param,
-    y: Param
+  params: {
+    isCorner: boolean;
+    x: Param;
+    y: Param;
   };
 
   constructor(x, y, id?) {
     super(id);
-    this.params  = {
-      x: new Param(x, 'X'),
-      y: new Param(y, 'Y')
+    this.params = {
+      isCorner: false,
+      x: new Param(x, "X"),
+      y: new Param(y, "Y"),
     };
   }
 
@@ -56,15 +57,31 @@ export class EndPoint extends SketchObject {
   }
 
   visitLinked(cb) {
-    dfs(this, (obj, chCb) => obj.constraints.forEach(c => {
-      if (c.schema.id === ConstraintDefinitions.PCoincident.id) {
-        c.objects.forEach(chCb);
-      }
-    }), cb);
+    dfs(
+      this,
+      (obj, chCb) =>
+        obj.constraints.forEach((c) => {
+          if (c.schema.id === ConstraintDefinitions.PCoincident.id) {
+            c.objects.forEach(chCb);
+          }
+        }),
+      cb
+    );
   }
 
   drawImpl(ctx, scale) {
-    DrawPoint(ctx, this.x, this.y, 3, scale)
+    let color = "blue"; // Default color for edges
+    let isCoincident = false;
+    this.visitLinked((linkedPoint) => {
+      if (linkedPoint !== this) {
+        isCoincident = true;
+      }
+    });
+    if (isCoincident) {
+      color = "red"; // Change color to red if the point is coincident
+    }
+    ctx.fillStyle = color;
+    DrawPoint(ctx, this.x, this.y, 3, scale);
   }
 
   setXY(x, y) {
@@ -97,7 +114,7 @@ export class EndPoint extends SketchObject {
   }
 
   mirror(dest, mirroringFunc) {
-    const {x, y} = mirroringFunc(this.x, this.y);
+    const { x, y } = mirroringFunc(this.x, this.y);
     dest.x = x;
     dest.y = y;
   }
@@ -105,16 +122,12 @@ export class EndPoint extends SketchObject {
   write(): SketchPointSerializationData {
     return {
       x: this.x,
-      y: this.y
-    }
+      y: this.y,
+    };
   }
 
   static read(id: string, data: SketchPointSerializationData): EndPoint {
-    return new EndPoint(
-      data.x,
-      data.y,
-      id
-    )
+    return new EndPoint(data.x, data.y, id);
   }
 }
 
@@ -123,7 +136,5 @@ export interface SketchPointSerializationData extends SketchObjectSerializationD
   y: number;
 }
 
-EndPoint.prototype._class = 'TCAD.TWO.EndPoint';
-EndPoint.prototype.TYPE = 'Point';
-
-
+EndPoint.prototype._class = "TCAD.TWO.EndPoint";
+EndPoint.prototype.TYPE = "Point";
