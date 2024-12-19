@@ -82,6 +82,14 @@ export class EndPoint extends SketchObject {
     }
     ctx.fillStyle = color;
     DrawPoint(ctx, this.x, this.y, 3, scale);
+
+    // Draw and fill an arc around the point
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 5 * scale, 0, 2 * Math.PI); // Adjust the radius as needed
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.stroke();
   }
 
   setXY(x, y) {
